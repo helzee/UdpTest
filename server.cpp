@@ -93,11 +93,8 @@ int main()
       {
          int msg[1];
          // keep reading buffer until we get our message
-         if (recv(sd, (char *)msg, MSG_SIZE, 0) == -1)
+         for (int nRead = 0; nRead < MSG_SIZE; nRead += recv(sd, (char *)msg, MSG_SIZE, 0))
          {
-
-            cerr << "RECV ERROR " << errno << endl;
-            return -1;
          }
          // send the message back
          if (send(sd, (char *)msg, MSG_SIZE, 0) == -1)

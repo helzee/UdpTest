@@ -29,16 +29,14 @@ void *receiverThreadFunc(void *ptr)
    int sd = data->sd;
 
    int msg[1];
+   msg[0] = -1;
 
    cout << "thread start" << endl;
    while (keepReceiving)
    {
 
-      if (recv(sd, (char *)msg, MSG_SIZE, 0) == -1)
+      for (int nRead = 0; nRead < MSG_SIZE; nRead += recv(sd, (char *)msg, MSG_SIZE, 0))
       {
-
-         cerr << "RECV ERROR " << gai_strerror(errno) << endl;
-         return ptr;
       }
 
       int index = msg[0];
@@ -54,7 +52,7 @@ int createNewSocket(addrinfo *servInfo)
    // make a socket, bind it, listen to it
    int clientSd = socket(servInfo->ai_family, servInfo->ai_socktype,
                          servInfo->ai_protocol);
-   if (clientSd == -1)
+   if (clientSd < 0)
    {
       cerr << "Socket creation error!" << errno << endl;
 
@@ -79,12 +77,13 @@ int createClientTcpSocket(const char *port, const char *server)
    memset(&hints, 0, sizeof(hints)); // initialize memory in struct hints
    hints.ai_family = AF_UNSPEC;      // use IPv4 or IPv6
    hints.ai_socktype = SOCK_STREAM;  // use TCP
+   hints.ai_flags = AI_PASSIVE;
 
    // call getaddrinfo() to update servInfo
    int error = getaddrinfo(server, port, &hints, &servInfo);
    if (error != 0)
    {
-      cerr << "getaddrinfo() Error! " << gai_strerror(error) << endl;
+      cerr << "getaddrinfo() Error! " << error << endl;
       exit(1);
    }
 
@@ -103,18 +102,17 @@ int main()
    // test sending a byte of data to server
    // measure latency and dropped messages
 
-   int ack[1];
    int msg[1];
 
    Timer wait;
 
    // shared data for both threads
-   Timer *allTimers = new Timer[TOTAL_MSG];
+   Timer *allTimers = new Timer[TOTAL_MSG]();
    long *allRTT = new long[TOTAL_MSG];
    for (int i = 0; i < TOTAL_MSG; i++)
    {
       allRTT[i] = 0;
-   }
+      }
 
    pthread_t recvThread;
    struct thread_data *data = new thread_data;
@@ -143,7 +141,7 @@ int main()
       // send message
       if (send(sd, (char *)msg, MSG_SIZE, 0) == -1)
       {
-         cerr << "RECV ERROR " << gai_strerror(errno) << endl;
+         cerr << "SEND ERROR " << errno << endl;
          return -1;
       }
       // wait 100 ms
