@@ -41,7 +41,7 @@ int main()
    if (getaddrinfo(NULL, PORT, &hints, &res) < 0)
    {
       cerr << "Cannot resolve server info." << endl;
-      return;
+      return -1;
    }
 
    if ((sd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) < 0)
@@ -73,7 +73,7 @@ int main()
    if (sd < 0)
    {
       cerr << "server: failed to bind" << endl;
-      return;
+      return -1;
    }
 
    struct sockaddr_storage clientAddr;
@@ -85,7 +85,7 @@ int main()
       if (newSd < 0)
       {
          cerr << "socket connection error" << errno << endl;
-         return;
+         return -1;
       }
 
       // just be a server for this one socket forever
