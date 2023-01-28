@@ -6,7 +6,7 @@ using namespace std;
 
 const char* PORT = "34369";
 const char* RECV_PORT = "34370";
-const char* SERVER = "csslab1.uwb.edu";
+const char* SERVER = "10.65.68.231";
 const int TOTAL_MSG = 2000;
 const int MSG_SIZE = 4;
 
