@@ -94,7 +94,7 @@ int main()
          // keep reading buffer until we get our message
          for (int nRead = 0; nRead < MSG_SIZE; nRead += read(newSd, (char *)msg, MSG_SIZE))
          {
-            cout << nRead << endl;
+            // cout << nRead << endl;
             if (nRead < 0)
             {
                cerr << "READ ERROR " << errno << endl;
@@ -102,7 +102,7 @@ int main()
             }
          }
          // send the message back
-         if (write(sd, (char *)msg, MSG_SIZE) == -1)
+         if (write(newSd, (char *)msg, MSG_SIZE) == -1)
          {
             cerr << "SEND ERROR " << errno << endl;
             return -1;
