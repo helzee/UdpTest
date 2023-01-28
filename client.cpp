@@ -7,8 +7,9 @@ using namespace std;
 
 const char *PORT = "34371";
 
-const char *SERVER = "10.65.68.231";
-const int TOTAL_MSG = 20000;
+// const char *SERVER = "10.65.68.231"; // gizmo_base
+const char *SERVER = "10.65.70.129"; // gizmo_base_agx
+const int TOTAL_MSG = 200;
 const int MSG_SIZE = 4;
 const int INTERVAL = 100000;
 
@@ -112,7 +113,7 @@ int main()
    for (int i = 0; i < TOTAL_MSG; i++)
    {
       allRTT[i] = 0;
-      }
+   }
 
    pthread_t recvThread;
    struct thread_data *data = new thread_data;
