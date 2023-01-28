@@ -14,9 +14,10 @@
 #include <unistd.h>    // read, write, close
 #include <cstring>
 #include <ostream>
-#include "TcpSocket.h"
 
 using namespace std;
+
+#define NULL_SD -1
 
 const char *PORT = "34371";
 const char *CLIENT = "10.65.65.87"; // my IP address given by huky on net
@@ -27,7 +28,7 @@ const int MSG_SIZE = 4;
 int main()
 {
 
-   struct addrinfo hints, *res, *p;
+   struct addrinfo hints, *res;
    memset(&hints, 0, sizeof(hints)); // Zero-initialize hints
 
    hints.ai_family = AF_UNSPEC;     // use IPv4 or IPv6, whichever
@@ -44,9 +45,9 @@ int main()
       return -1;
    }
 
-   if ((sd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) < 0)
+   if ((sd = socket(res->ai_family, res->ai_socktype, res->ai_protocol)) < 0)
    {
-      cerr << "server: socket" << endl;
+      cerr << "server: socket" << errno << endl;
    }
 
    // lose the pesky "Address already in use" error message
@@ -56,7 +57,7 @@ int main()
       cerr << "Set Socket Option Error!" << endl;
    }
 
-   if (bind(sd, p->ai_addr, p->ai_addrlen) < 0)
+   if (bind(sd, res->ai_addr, res->ai_addrlen) < 0)
    {
       close(sd);
       sd = NULL_SD;
@@ -69,7 +70,6 @@ int main()
       cerr << "listen error" << endl;
    }
 
-   freeaddrinfo(res);
    if (sd < 0)
    {
       cerr << "server: failed to bind" << endl;
@@ -98,6 +98,7 @@ int main()
             ;
          // send the message back
          write(sd, (char *)msg, MSG_SIZE);
+         cout << msg[0] << endl;
       }
    }
 }
