@@ -108,7 +108,8 @@ int main()
    FILE* output("output.csv", "a");
    fstream out(output);
 
-   out << (sum / TOTAL_MSG) << "," << errors << "\n";
+   out << (sum / TOTAL_MSG) << "," << errors << "," << TOTAL_MSG << ",\n";
+   out.close();
 
    delete[] allTimers;
    delete[] allRTT;
