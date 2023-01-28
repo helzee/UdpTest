@@ -20,7 +20,6 @@ using namespace std;
 #define NULL_SD -1
 
 const char *PORT = "34371";
-const char *CLIENT = "10.65.65.87"; // my IP address given by huky on net
 
 const int TOTAL_MSG = 2000;
 const int MSG_SIZE = 4;
@@ -93,11 +92,17 @@ int main()
       {
          int msg[1];
          // keep reading buffer until we get our message
-         for (int nRead = 0; nRead < MSG_SIZE; nRead += recv(sd, (char *)msg, MSG_SIZE, 0))
+         for (int nRead = 0; nRead < MSG_SIZE; nRead += read(sd, (char *)msg, MSG_SIZE))
          {
+            cout << nRead << endl;
+            if (nRead < 0)
+            {
+               cerr << "READ ERROR " << errno << endl;
+               return 1;
+            }
          }
          // send the message back
-         if (send(sd, (char *)msg, MSG_SIZE, 0) == -1)
+         if (write(sd, (char *)msg, MSG_SIZE) == -1)
          {
             cerr << "SEND ERROR " << errno << endl;
             return -1;

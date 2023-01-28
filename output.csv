@@ -1,1 +1,3 @@
-average latency (ms),dropped messages, total messages,
+Average latency (usec),dropped messages, total messages, message size,interval (usec)
+0, 200, 200, 4,100000,
+ 

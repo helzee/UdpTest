@@ -36,7 +36,7 @@ void *receiverThreadFunc(void *ptr)
    while (keepReceiving)
    {
 
-      for (int nRead = 0; nRead < MSG_SIZE; nRead += recv(sd, (char *)msg, MSG_SIZE, 0))
+      for (int nRead = 0; nRead < MSG_SIZE; nRead += read(sd, (char *)msg, MSG_SIZE))
       {
       }
 
@@ -140,7 +140,7 @@ int main()
       // start timer for this message
       allTimers[i].start();
       // send message
-      if (send(sd, (char *)msg, MSG_SIZE, 0) == -1)
+      if (write(sd, (char *)msg, MSG_SIZE) == -1)
       {
          cerr << "SEND ERROR " << errno << endl;
          return -1;
