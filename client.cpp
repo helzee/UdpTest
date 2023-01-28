@@ -102,8 +102,13 @@ int main()
       }
    }
 
-   cout << "Average latency: " << (sum / TOTAL_MSG) << endl;
+   cout << "Average latency (usec): " << (sum / TOTAL_MSG) << endl;
    cout << "Dropped messages: " << errors << endl;
+
+   FILE* output("output.csv", "a");
+   fstream out(output);
+
+   out << (sum / TOTAL_MSG) << "," << errors << "\n";
 
    delete[] allTimers;
    delete[] allRTT;
