@@ -34,10 +34,12 @@ void *receiverThreadFunc(void *ptr)
    while (keepReceiving)
    {
 
-      // keep reading buffer until we get our message
-      for (int bytesRead = 0; bytesRead < MSG_SIZE; bytesRead +=
-                                                    read(sd, (char *)msg, MSG_SIZE))
-         ;
+      if (recv(sd, (char *)msg, MSG_SIZE, 0) == -1)
+      {
+
+         cerr << "RECV ERROR " << gai_strerror(errno) << endl;
+         return ptr;
+      }
 
       int index = msg[0];
       data->allRTT[index] = data->allTimers[index].lap();
@@ -134,7 +136,11 @@ int main()
       // start timer for this message
       allTimers[i].start();
       // send message
-      write(sd, (char *)msg, MSG_SIZE);
+      if (send(sd, (char *)msg, MSG_SIZE, 0) == -1)
+      {
+         cerr << "RECV ERROR " << gai_strerror(errno) << endl;
+         return -1;
+      }
       // wait 100 ms
       usleep(INTERVAL);
    }

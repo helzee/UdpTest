@@ -93,11 +93,18 @@ int main()
       {
          int msg[1];
          // keep reading buffer until we get our message
-         for (int bytesRead = 0; bytesRead < MSG_SIZE; bytesRead +=
-                                                       read(sd, (char *)msg, MSG_SIZE))
-            ;
+         if (recv(sd, (char *)msg, MSG_SIZE, 0) == -1)
+         {
+
+            cerr << "RECV ERROR " << gai_strerror(errno) << endl;
+            return -1;
+         }
          // send the message back
-         write(sd, (char *)msg, MSG_SIZE);
+         if (send(sd, (char *)msg, MSG_SIZE, 0) == -1)
+         {
+            cerr << "RECV ERROR " << gai_strerror(errno) << endl;
+            return -1;
+         }
          cout << msg[0] << endl;
       }
    }
