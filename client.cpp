@@ -9,7 +9,7 @@ const char *PORT = "34371";
 
 // const char *SERVER = "10.65.68.231"; // gizmo_base
 const char *SERVER = "10.65.70.129"; // gizmo_base_agx
-const int TOTAL_MSG = 200;
+const int TOTAL_MSG = 20000;
 const int MSG_SIZE = 4;
 const int INTERVAL = 100000;
 
