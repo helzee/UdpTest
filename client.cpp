@@ -1,48 +1,97 @@
 #include "Timer.h"
-#include "UdpSocket.h"
+#include "TcpSocket.h"
 #include <pthread.h>
+#include <fstream>
 
 using namespace std;
 
-const char* PORT = "34369";
-const char* RECV_PORT = "34370";
-const char* SERVER = "10.65.68.231";
+const char *PORT = "34371";
+
+const char *SERVER = "10.65.68.231";
 const int TOTAL_MSG = 20000;
 const int MSG_SIZE = 4;
+const int INTERVAL = 100000;
 
 bool keepReceiving = true;
 
-struct thread_data {
-   Timer* allTimers;
-   long* allRTT;
+struct thread_data
+{
+   Timer *allTimers;
+   long *allRTT;
+   int sd;
 };
 
-void* receiverThreadFunc(void* ptr)
+void *receiverThreadFunc(void *ptr)
 {
 
-   thread_data* data = (thread_data*)ptr;
+   thread_data *data = (thread_data *)ptr;
 
-   UdpSocket udpSock(RECV_PORT);
+   int sd = data->sd;
 
    int msg[1];
 
    cout << "thread start" << endl;
-   while (keepReceiving) {
-      while (udpSock.pollRecvFrom()) {
-         udpSock.recvFrom((char*)msg, MSG_SIZE);
-         int index = msg[0];
-         data->allRTT[index] = data->allTimers[index].lap();
-         cout << msg[0] << endl;
-      }
+   while (keepReceiving)
+   {
+
+      // keep reading buffer until we get our message
+      for (int bytesRead = 0; bytesRead < MSG_SIZE; bytesRead +=
+                                                    read(sd, (char *)msg, MSG_SIZE))
+         ;
+
+      int index = msg[0];
+      data->allRTT[index] = data->allTimers[index].lap();
+      cout << msg[0] << endl;
    }
 
    return ptr;
 }
 
+int createNewSocket(addrinfo *servInfo)
+{
+   // make a socket, bind it, listen to it
+   int clientSd = socket(servInfo->ai_family, servInfo->ai_socktype,
+                         servInfo->ai_protocol);
+   if (clientSd == -1)
+   {
+      cerr << "Socket creation error!" << errno << endl;
+
+      return -1;
+   }
+   // lose pesky "Address already in use" error message
+   int status = connect(clientSd, servInfo->ai_addr, servInfo->ai_addrlen);
+   if (status < 0)
+   {
+      cerr << "Failed to connect to the server" << errno << endl;
+
+      return -1;
+   }
+
+   return clientSd;
+}
+
+int createClientTcpSocket(const char *port, const char *server)
+{
+   // create server info structure
+   struct addrinfo hints, *servInfo; // loaded with getaddrinfo()
+   memset(&hints, 0, sizeof(hints)); // initialize memory in struct hints
+   hints.ai_family = AF_UNSPEC;      // use IPv4 or IPv6
+   hints.ai_socktype = SOCK_STREAM;  // use TCP
+
+   // call getaddrinfo() to update servInfo
+   int error = getaddrinfo(server, port, &hints, &servInfo);
+   if (error != 0)
+   {
+      cerr << "getaddrinfo() Error! " << gai_strerror(error) << endl;
+      exit(1);
+   }
+
+   return createNewSocket(servInfo);
+}
+
 int main()
 {
-   UdpSocket udpSock(PORT);
-   udpSock.setDestAddress(SERVER);
+   int sd = createClientTcpSocket(PORT, SERVER);
 
    // test sending a byte of data to server
    // measure latency and dropped messages
@@ -53,20 +102,22 @@ int main()
    Timer wait;
 
    // shared data for both threads
-   Timer* allTimers = new Timer[TOTAL_MSG];
-   long* allRTT = new long[TOTAL_MSG];
-   for (int i = 0; i < TOTAL_MSG; i++) {
+   Timer *allTimers = new Timer[TOTAL_MSG];
+   long *allRTT = new long[TOTAL_MSG];
+   for (int i = 0; i < TOTAL_MSG; i++)
+   {
       allRTT[i] = 0;
    }
 
    pthread_t recvThread;
-   struct thread_data* data = new thread_data;
+   struct thread_data *data = new thread_data;
    data->allTimers = allTimers;
    data->allRTT = allRTT;
+   data->sd = sd;
 
    // create reciever thread
    int iret1 =
-       pthread_create(&recvThread, NULL, receiverThreadFunc, (void*)data);
+       pthread_create(&recvThread, NULL, receiverThreadFunc, (void *)data);
 
    /**
     * @brief We send out a bunch of messages in 0.5 second intervals.
@@ -77,14 +128,15 @@ int main()
     *
     */
 
-   for (int i = 0; i < TOTAL_MSG; i++) {
+   for (int i = 0; i < TOTAL_MSG; i++)
+   {
       msg[0] = i;
       // start timer for this message
       allTimers[i].start();
       // send message
-      udpSock.sendTo((char*)msg, MSG_SIZE);
+      write(sd, (char *)msg, MSG_SIZE);
       // wait 100 ms
-      usleep(100000);
+      usleep(INTERVAL);
    }
    // stop receiver thread
    keepReceiving = false;
@@ -92,23 +144,34 @@ int main()
    long avgLatency;
    double sum = 0;
    int errors = 0;
-   for (int i = 0; i < TOTAL_MSG; i++) {
-      if (allRTT[i] <= 0) {
+   ofstream allOutput("all_output.csv");
+   allOutput << "message number,latency (usec),message size,interval (usec),\n";
+   for (int i = 0; i < TOTAL_MSG; i++)
+   {
+      allOutput << i << ",";
+      if (allRTT[i] <= 0)
+      {
+         allOutput << "NULL,";
          cerr << "RRT negative or zero at i = " << i << ". RTT = " << allRTT[i]
               << endl;
          errors++;
-      } else {
-         sum += (double)allRTT[i] / 2;
       }
+      else
+      {
+         sum += (double)allRTT[i] / 2;
+         allOutput << (double)allRTT[i] / 2 << ",";
+      }
+      allOutput << MSG_SIZE << "," << INTERVAL << ",\n";
    }
+
+   allOutput.close();
 
    cout << "Average latency (usec): " << (sum / TOTAL_MSG) << endl;
    cout << "Dropped messages: " << errors << endl;
 
-   FILE* output("output.csv", "a");
-   fstream out(output);
-
-   out << (sum / TOTAL_MSG) << "," << errors << "," << TOTAL_MSG << ",\n";
+   ofstream out("output.csv");
+   out << "Average latency (usec),dropped messages, total messages, message size,interval (usec)\n";
+   out << (sum / TOTAL_MSG) << ", " << errors << ", " << TOTAL_MSG << ", " << MSG_SIZE << "," << INTERVAL << ",\n ";
    out.close();
 
    delete[] allTimers;
