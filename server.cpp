@@ -92,7 +92,7 @@ int main()
       {
          int msg[1];
          // keep reading buffer until we get our message
-         for (int nRead = 0; nRead < MSG_SIZE; nRead += read(sd, (char *)msg, MSG_SIZE))
+         for (int nRead = 0; nRead < MSG_SIZE; nRead += read(newSd, (char *)msg, MSG_SIZE))
          {
             cout << nRead << endl;
             if (nRead < 0)
