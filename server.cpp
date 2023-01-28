@@ -96,13 +96,13 @@ int main()
          if (recv(sd, (char *)msg, MSG_SIZE, 0) == -1)
          {
 
-            cerr << "RECV ERROR " << gai_strerror(errno) << endl;
+            cerr << "RECV ERROR " << errno << endl;
             return -1;
          }
          // send the message back
          if (send(sd, (char *)msg, MSG_SIZE, 0) == -1)
          {
-            cerr << "RECV ERROR " << gai_strerror(errno) << endl;
+            cerr << "SEND ERROR " << errno << endl;
             return -1;
          }
          cout << msg[0] << endl;

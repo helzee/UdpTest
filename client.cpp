@@ -94,6 +94,11 @@ int createClientTcpSocket(const char *port, const char *server)
 int main()
 {
    int sd = createClientTcpSocket(PORT, SERVER);
+   if (sd < 0)
+   {
+      cerr << "socket create error " << errno << endl;
+      return -1;
+   }
 
    // test sending a byte of data to server
    // measure latency and dropped messages
